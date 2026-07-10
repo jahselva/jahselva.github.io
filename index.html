@@ -962,10 +962,23 @@ async function saveWithPhotos() {
     alert('Selecione as fotos primeiro.');
     return;
   }
-  // Comprime cada foto para máx 900px e qualidade 0.65 (~3-5 MB total)
-  const compressed = await Promise.all(
-    savedUrls.map(url => url ? compressDataUrl(url, 900, 0.65) : Promise.resolve(null))
-  );
+  // Comprime iterativamente até caber em 22 MB
+  const TARGET_BYTES = 22 * 1024 * 1024;
+  const steps = [
+    { maxW: 1200, q: 0.72 },
+    { maxW: 1000, q: 0.65 },
+    { maxW:  800, q: 0.58 },
+    { maxW:  650, q: 0.50 },
+    { maxW:  500, q: 0.42 },
+  ];
+  let compressed;
+  for (const { maxW, q } of steps) {
+    compressed = await Promise.all(
+      savedUrls.map(url => url ? compressDataUrl(url, maxW, q) : Promise.resolve(null))
+    );
+    const totalBytes = compressed.reduce((acc, d) => acc + (d ? d.length * 0.75 : 0), 0);
+    if (totalBytes < TARGET_BYTES) break;
+  }
   const html = document.documentElement.outerHTML;
   const marker = 'const SLOTS = [';
   const injection = `const BAKED_PHOTOS = ${JSON.stringify(compressed)};\nconst BAKED_POS = ${JSON.stringify(savedPos)};\nconst BAKED_CAPS = ${JSON.stringify(savedCaps)};\n`;
