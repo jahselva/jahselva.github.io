@@ -722,7 +722,7 @@ Promise.all([loadPhotos(), loadPositions(), loadCaptions()]).then(([saved, pos, 
       }
     });
     showSite();
-    if (EDIT_MODE) setTimeout(attachAllControls, 100);
+    setTimeout(attachAllControls, 100);
   } else if (typeof BAKED_PHOTOS === 'undefined') {
     if (EDIT_MODE) document.getElementById('upload-overlay').style.display = 'flex';
   }
