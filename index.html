@@ -979,7 +979,9 @@ async function saveWithPhotos() {
     const totalBytes = compressed.reduce((acc, d) => acc + (d ? d.length * 0.75 : 0), 0);
     if (totalBytes < TARGET_BYTES) break;
   }
-  const html = document.documentElement.outerHTML;
+  let html = document.documentElement.outerHTML;
+  // Remove baked data de versões anteriores para não duplicar
+  html = html.replace(/const BAKED_PHOTOS[\s\S]*?(?=const SLOTS = \[)/, '');
   const marker = 'const SLOTS = [';
   const injection = `const BAKED_PHOTOS = ${JSON.stringify(compressed)};\nconst BAKED_POS = ${JSON.stringify(savedPos)};\nconst BAKED_CAPS = ${JSON.stringify(savedCaps)};\n`;
   const patched = html.replace(marker, injection + marker);
