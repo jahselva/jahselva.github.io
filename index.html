@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jah Selva</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    :root {
+      --ink:    #0F0D09;
+      --cream:  #F5EFE3;
+      --terra:  #B85A30;
+      --forest: #243D28;
+      --gold:   #C8922A;
+    }
+    body { font-family: 'DM Sans', sans-serif; background: var(--ink); color: var(--cream); overflow-x: hidden; }
+
+    /* ── UPLOAD OVERLAY ── */
+    #upload-overlay {
+      position: fixed; inset: 0; z-index: 1000;
+      background: var(--ink);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 2rem; padding: 2rem;
+      text-align: center;
+    }
+    #upload-overlay h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.5rem, 6vw, 5rem);
+      font-weight: 300;
+      line-height: 1;
+    }
+    #upload-overlay h1 em { font-style: italic; color: var(--gold); }
+    #upload-overlay p { font-size: 0.9rem; color: rgba(245,239,227,0.55); max-width: 380px; line-height: 1.7; font-weight: 300; }
+    .upload-btn-wrap { position: relative; }
+    #photo-input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+    .upload-btn {
+      display: inline-flex; align-items: center; gap: 0.8rem;
+      padding: 1rem 2.5rem;
+      border: 1px solid rgba(245,239,227,0.25);
+      border-radius: 999px;
+      font-size: 0.85rem; font-weight: 400; letter-spacing: 0.08em;
+      color: var(--cream);
+      transition: border-color 0.2s, background 0.2s;
+      cursor: pointer;
+    }
+    .upload-btn:hover { border-color: var(--terra); background: rgba(184,90,48,0.08); }
+    .skip-btn {
+      font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase;
+      color: rgba(245,239,227,0.25); cursor: pointer; text-decoration: underline;
+      border: none; background: none;
+    }
+    .skip-btn:hover { color: rgba(245,239,227,0.5); }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.6rem 3rem;
+    }
+    .logo { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 300; letter-spacing: 0.15em; text-transform: uppercase; }
+    .nav-right { display: flex; gap: 2.5rem; list-style: none; }
+    .nav-right a { font-size: 0.75rem; font-weight: 300; letter-spacing: 0.12em; text-transform: uppercase; text-decoration: none; color: var(--cream); opacity: 0.6; transition: opacity 0.2s; }
+    .nav-right a:hover { opacity: 1; }
+
+    /* ── HERO ── */
+    #hero {
+      height: 100vh; position: relative; overflow: hidden;
+      display: flex; align-items: flex-end;
+    }
+    .hero-bg {
+      position: absolute; inset: 0;
+      background: linear-gradient(160deg, #1a3320 0%, #0a1510 50%, var(--ink) 100%);
+      transition: opacity 0.8s ease;
+    }
+    .hero-bg img {
+      width: 100%; height: 100%; object-fit: cover;
+      object-position: center 20%;
+    }
+    #hero::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(15,13,9,0.95) 0%, rgba(15,13,9,0.3) 50%, rgba(15,13,9,0.1) 100%);
+      pointer-events: none;
+    }
+    .hero-content {
+      position: relative; z-index: 2;
+      padding: 0 3rem 5rem;
+      width: 100%;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: end;
+    }
+    .hero-eyebrow {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.2rem, 2.2vw, 1.9rem);
+      font-weight: 400; font-style: italic;
+      letter-spacing: 0.04em;
+      color: #DEB84E; margin-bottom: 1.4rem;
+      text-shadow: 0 2px 22px rgba(222,184,78,0.4);
+    }
+    .hero-name {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(4rem, 8vw, 8rem);
+      font-weight: 300; line-height: 0.92;
+    }
+    .hero-name em { font-style: italic; color: var(--gold); }
+    .hero-tagline {
+      font-size: 1rem; font-weight: 300; line-height: 1.8;
+      color: rgba(245,239,227,0.6); max-width: 380px; align-self: end;
+    }
+    .scroll-hint {
+      position: absolute; bottom: 3rem; right: 3rem; z-index: 2;
+      display: flex; align-items: center; gap: 0.8rem;
+      font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase;
+      color: rgba(245,239,227,0.3);
+    }
+    .scroll-line { width: 40px; height: 1px; background: rgba(245,239,227,0.2); animation: grow 2s ease-in-out infinite; }
+    @keyframes grow { 0%,100%{width:40px;opacity:.4} 50%{width:60px;opacity:1} }
+
+    /* ── MANIFESTO ── */
+    #manifesto {
+      padding: 9rem 3rem;
+      display: grid; grid-template-columns: 1fr 2.5fr; gap: 5rem; align-items: start;
+      border-top: 1px solid rgba(245,239,227,0.07);
+    }
+    .manifesto-label { font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--terra); padding-top: 0.6rem; }
+    .manifesto-text {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.9rem, 3.5vw, 3rem);
+      font-weight: 300; line-height: 1.45; color: var(--cream);
+    }
+    .manifesto-text em { font-style: italic; color: var(--gold); }
+
+    /* ── FULL BLEED ── */
+    .full-bleed {
+      position: relative; overflow: hidden;
+      height: 75vh; background: #0a1208;
+    }
+    .full-bleed img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .full-bleed .ph { width: 100%; height: 100%; }
+    .full-bleed::after {
+      content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+      height: 40%; pointer-events: none;
+      background: linear-gradient(to top, rgba(15,13,9,0.72) 0%, transparent 100%);
+    }
+    .full-bleed-cap {
+      position: absolute; bottom: 2.5rem; left: 3rem;
+      font-size: 0.68rem; letter-spacing: 0.16em; text-transform: uppercase;
+      color: rgba(245,239,227,0.92);
+      text-shadow: 0 1px 8px rgba(0,0,0,0.9);
+      z-index: 1; cursor: text;
+    }
+    .full-bleed-cap:hover, .photo-cap:hover {
+      outline: 1px dashed rgba(245,239,227,0.3); outline-offset: 4px; border-radius: 2px;
+    }
+    .cap-input {
+      background: rgba(15,13,9,0.75); backdrop-filter: blur(8px);
+      border: 1px solid rgba(245,239,227,0.3); border-radius: 4px;
+      color: rgba(245,239,227,0.92); font-size: 0.68rem; letter-spacing: 0.16em;
+      text-transform: uppercase; font-family: 'DM Sans', sans-serif;
+      padding: 0.3rem 0.6rem; outline: none; min-width: 280px;
+      position: absolute; bottom: 2.5rem; left: 3rem; z-index: 20;
+    }
+    body.edit-mode .photo-cap { cursor: text; }
+    /* ── EDIT CONTROLS (ocultos para visitantes) ── */
+    .swap-btn, .drag-handle, .pos-arrows {
+      display: none !important;
+    }
+    body.edit-mode .swap-btn {
+      display: inline-flex !important;
+    }
+    body.edit-mode .drag-handle {
+      display: flex !important;
+    }
+    body.edit-mode .pos-arrows {
+      display: flex !important;
+    }
+    /* ── SWAP BUTTON ── */
+    .swap-btn {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%) scale(0.85);
+      z-index: 10; opacity: 0; pointer-events: none;
+      background: rgba(15,13,9,0.72); backdrop-filter: blur(6px);
+      border: 1px solid rgba(245,239,227,0.25); border-radius: 999px;
+      color: var(--cream); font-size: 0.68rem; letter-spacing: 0.12em;
+      text-transform: uppercase; padding: 0.55rem 1.2rem; cursor: pointer;
+      transition: opacity 0.2s, transform 0.2s;
+      white-space: nowrap;
+    }
+    body.edit-mode .full-bleed:hover .swap-btn,
+    body.edit-mode .photo-cell:hover .swap-btn,
+    body.edit-mode #hero:hover .swap-btn {
+      opacity: 1; pointer-events: auto; transform: translate(-50%,-50%) scale(1);
+    }
+    .drag-over { outline: 2px solid var(--terra); outline-offset: -2px; }
+    /* ── DRAG HANDLE ── */
+    .drag-handle {
+      position: absolute; top: 0.8rem; left: 0.8rem;
+      z-index: 10; opacity: 0; pointer-events: none;
+      background: rgba(15,13,9,0.72); backdrop-filter: blur(6px);
+      border: 1px solid rgba(245,239,227,0.25); border-radius: 8px;
+      color: var(--cream); font-size: 1rem;
+      width: 2rem; height: 2rem;
+      align-items: center; justify-content: center;
+      cursor: grab; transition: opacity 0.2s;
+      line-height: 1; user-select: none;
+    }
+    body.edit-mode .full-bleed:hover .drag-handle,
+    body.edit-mode .photo-cell:hover .drag-handle,
+    body.edit-mode #hero:hover .drag-handle { opacity: 1; pointer-events: auto; }
+    /* ── POSITION ARROWS ── */
+    .pos-arrows {
+      position: absolute; top: 50%; right: 0.8rem;
+      transform: translateY(-50%);
+      z-index: 10; opacity: 0; pointer-events: none;
+      flex-direction: column; gap: 0.3rem;
+      transition: opacity 0.2s;
+    }
+    body.edit-mode .full-bleed:hover .pos-arrows,
+    body.edit-mode .photo-cell:hover .pos-arrows,
+    body.edit-mode #hero:hover .pos-arrows { opacity: 1; pointer-events: auto; }
+    .pos-arrow {
+      background: rgba(15,13,9,0.72); backdrop-filter: blur(6px);
+      border: 1px solid rgba(245,239,227,0.25); border-radius: 999px;
+      color: var(--cream); font-size: 0.85rem;
+      width: 2rem; height: 2rem;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: background 0.15s;
+      line-height: 1;
+    }
+    .pos-arrow:hover { background: rgba(184,90,48,0.5); }
+
+    /* ── WORK ── */
+    #work { padding: 8rem 3rem; border-top: 1px solid rgba(245,239,227,0.07); }
+    .work-header { display: flex; align-items: baseline; gap: 2rem; margin-bottom: 5rem; }
+    .section-num { font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--terra); }
+    .section-heading { font-family: 'Playfair Display', serif; font-size: clamp(2rem, 4vw, 3.5rem); font-weight: 300; }
+    .work-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: rgba(245,239,227,0.05); }
+    .work-item {
+      background: var(--ink); padding: 3rem 2.5rem;
+      display: flex; flex-direction: column; gap: 1.5rem;
+      position: relative; overflow: hidden; transition: background 0.3s;
+    }
+    .work-item::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      transform: scaleX(0); transform-origin: left; transition: transform 0.4s;
+    }
+    .work-item:nth-child(1)::before { background: var(--terra); }
+    .work-item:nth-child(2)::before { background: var(--gold); }
+    .work-item:nth-child(3)::before { background: #5a9e70; }
+    .work-item:hover { background: rgba(245,239,227,0.03); }
+    .work-item:hover::before { transform: scaleX(1); }
+    .work-num { font-size: 0.65rem; letter-spacing: 0.2em; color: rgba(245,239,227,0.25); }
+    .work-title { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 300; line-height: 1.3; }
+    .work-desc { font-size: 0.88rem; font-weight: 300; line-height: 1.85; color: rgba(245,239,227,0.75); flex: 1; }
+    .work-tag { font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--terra); }
+    .work-item:nth-child(2) .work-tag { color: var(--gold); }
+    .work-item:nth-child(3) .work-tag { color: #5a9e70; }
+    .work-item:nth-child(4) .work-tag { color: #7ab0c8; }
+    .work-item:nth-child(4)::before { background: #4a8aa8; }
+
+    /* ── GALLERY ── */
+    #gallery { padding: 8rem 3rem; border-top: 1px solid rgba(245,239,227,0.07); }
+    .gallery-header { display: flex; align-items: baseline; gap: 2rem; margin-bottom: 4rem; }
+    .photo-strip { display: grid; grid-template-columns: 1.6fr 1fr 1fr; gap: 4px; margin-bottom: 4px; }
+    .photo-strip-2 { display: grid; grid-template-columns: 1fr 1fr 1.6fr; gap: 4px; }
+    .photo-cell {
+      overflow: hidden; position: relative;
+      aspect-ratio: 3/4;
+    }
+    .photo-cell.wide  { aspect-ratio: 4/3; }
+    .photo-cell.sq    { aspect-ratio: 1; }
+    .photo-cell img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+      transition: transform 0.6s ease, filter 0.4s ease;
+      filter: grayscale(10%);
+    }
+    .photo-cell:hover img { transform: scale(1.04); filter: grayscale(0%); }
+    .photo-cell .ph { width: 100%; height: 100%; min-height: 240px; }
+    .photo-cell.has-cap::after {
+      content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+      height: 45%; pointer-events: none;
+      background: linear-gradient(to top, rgba(15,13,9,0.65) 0%, transparent 100%);
+    }
+    .photo-cap {
+      position: absolute; bottom: 0.85rem; left: 1rem;
+      font-size: 0.58rem; letter-spacing: 0.14em; text-transform: uppercase;
+      color: rgba(245,239,227,0.9);
+      text-shadow: 0 1px 5px rgba(0,0,0,0.95);
+      z-index: 1; line-height: 1.5;
+    }
+
+    /* ── LANGUAGES ── */
+    #languages {
+      padding: 5rem 3rem; border-top: 1px solid rgba(245,239,227,0.07);
+      display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;
+    }
+    .lang-toggle {
+      background: none; border: 1px solid rgba(245,239,227,0.15); border-radius: 999px;
+      padding: 0.25rem 0.75rem; cursor: pointer; display: flex; gap: 0.35rem; align-items: center;
+      font-size: 0.7rem; letter-spacing: 0.12em; font-family: 'DM Sans', sans-serif;
+      transition: border-color 0.2s;
+    }
+    .lang-toggle:hover { border-color: var(--terra); }
+    .lt-pt, .lt-en { color: var(--cream); transition: opacity 0.2s; opacity: 0.35; }
+    .lt-sep { color: rgba(245,239,227,0.2); }
+    .lang-toggle.is-pt .lt-pt { opacity: 1; }
+    .lang-toggle.is-en .lt-en { opacity: 1; }
+    .lang-pill {
+      padding: 0.55rem 1.3rem; border: 1px solid rgba(245,239,227,0.12);
+      border-radius: 999px; font-size: 0.8rem; font-weight: 300; letter-spacing: 0.05em;
+      color: rgba(245,239,227,0.6); transition: border-color 0.2s, color 0.2s;
+      display: flex; flex-direction: column; align-items: center; gap: 0.15rem;
+    }
+    .lang-pill:hover { border-color: var(--terra); color: var(--cream); }
+    .lang-level {
+      font-size: 0.58rem; letter-spacing: 0.1em; text-transform: uppercase;
+      color: rgba(245,239,227,0.3); font-weight: 300;
+    }
+    .lang-pill:hover .lang-level { color: rgba(245,239,227,0.5); }
+    .lang-sep { font-size: 0.6rem; color: rgba(245,239,227,0.12); }
+
+    /* ── CONTACT ── */
+    #contact {
+      padding: 10rem 3rem; border-top: 1px solid rgba(245,239,227,0.07);
+      display: grid; grid-template-columns: 1fr 1fr; gap: 6rem; align-items: end;
+    }
+    .contact-heading {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(3rem, 6vw, 6rem); font-weight: 300; line-height: 0.95;
+      margin-bottom: 2.5rem;
+    }
+    .contact-heading em { font-style: italic; color: var(--gold); }
+    .availability {
+      display: inline-flex; align-items: center; gap: 0.6rem;
+      font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: #5a9e70;
+    }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: #5cba7d; animation: blink 2s ease-in-out infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+    .contact-right { display: flex; flex-direction: column; gap: 2rem; }
+    .contact-link {
+      display: flex; flex-direction: column; gap: 0.3rem;
+      text-decoration: none;
+      border-bottom: 1px solid rgba(245,239,227,0.07);
+      padding-bottom: 2rem;
+      transition: border-color 0.2s;
+    }
+    .contact-link:hover { border-color: var(--terra); }
+    .contact-link:last-child { border-bottom: none; padding-bottom: 0; }
+    .cl-label { font-size: 0.68rem; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(245,239,227,0.28); }
+    .cl-value { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 300; color: var(--cream); }
+
+    footer {
+      padding: 2rem 3rem; border-top: 1px solid rgba(245,239,227,0.05);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    footer p { font-size: 0.7rem; letter-spacing: 0.08em; color: rgba(245,239,227,0.18); }
+
+    /* Fade */
+    .fade { opacity: 0; transform: translateY(22px); transition: opacity 0.8s ease, transform 0.8s ease; }
+    .fade.in { opacity: 1; transform: none; }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      nav { padding: 1.2rem 1.5rem; }
+      .nav-right { gap: 1.5rem; }
+      #hero::after { background: linear-gradient(to top, rgba(15,13,9,0.97) 0%, rgba(15,13,9,0.5) 60%, rgba(15,13,9,0.2) 100%); }
+      .hero-content { grid-template-columns: 1fr; padding: 0 1.5rem 4rem; gap: 1.5rem; }
+      #manifesto { grid-template-columns: 1fr; padding: 5rem 1.5rem; gap: 1.5rem; }
+      #work { padding: 5rem 1.5rem; }
+      .work-grid { grid-template-columns: 1fr; }
+      #gallery { padding: 5rem 1.5rem; }
+      .photo-strip, .photo-strip-2 { grid-template-columns: 1fr 1fr; }
+      #contact { grid-template-columns: 1fr; padding: 5rem 1.5rem; gap: 3rem; }
+      footer { flex-direction: column; gap: 0.5rem; padding: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── UPLOAD OVERLAY ── -->
+<div id="upload-overlay">
+  <h1>Jah<br><em>Selva</em></h1>
+  <p>Selecione as suas fotos para preenchimento do site. Elas ficam apenas no seu dispositivo — nada é enviado para a internet.</p>
+  <div class="upload-btn-wrap">
+    <input type="file" id="photo-input" accept="image/*" multiple />
+    <div class="upload-btn">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M16 10l-4-4-4 4M12 6v10"/></svg>
+      Escolher fotos
+    </div>
+  </div>
+  <button class="skip-btn" id="skip-btn">Ver site sem fotos</button>
+</div>
+
+<!-- ── NAV ── -->
+<nav>
+  <span class="logo">Jah Selva</span>
+  <ul class="nav-right">
+    <li><a href="#work"    data-pt="Trabalho" data-en="Work">Trabalho</a></li>
+    <li><a href="#gallery" data-pt="Galeria"  data-en="Gallery">Galeria</a></li>
+    <li><a href="#contact" data-pt="Contato"  data-en="Contact">Contato</a></li>
+    <li>
+      <button class="lang-toggle" onclick="toggleLang()" aria-label="Mudar idioma">
+        <span class="lt-pt">PT</span><span class="lt-sep">·</span><span class="lt-en">EN</span>
+      </button>
+    </li>
+  </ul>
+</nav>
+
+<!-- ── HERO ── -->
+<section id="hero">
+  <div class="hero-bg" id="hero-bg">
+    <!-- hero image fills here -->
+  </div>
+  <div class="hero-content">
+    <div>
+      <p class="hero-eyebrow" data-pt="Soberania Ancestral · Preservação · Mundo" data-en="Ancestral Sovereignty · Preservation · World">Soberania Ancestral · Preservação · Mundo</p>
+      <h1 class="hero-name">Jah<br><em>Selva</em></h1>
+    </div>
+    <p class="hero-tagline" data-pt="A floresta como ponto de encontro.<br>Projetos que preservam a vida." data-en="The forest as a meeting point.<br>Projects that preserve life.">
+      A floresta como ponto de encontro.<br>
+      Projetos que preservam a vida.
+    </p>
+  </div>
+  <div class="scroll-hint">
+    <span class="scroll-line"></span>
+    scroll
+  </div>
+</section>
+
+<!-- ── MANIFESTO ── -->
+<section id="manifesto">
+  <p class="manifesto-label fade" data-pt="Propósito" data-en="Purpose">Propósito</p>
+  <p class="manifesto-text fade" style="transition-delay:.1s"
+     data-pt="A soberania dos povos originários e a integridade das florestas são <em>a mesma luta</em>. Busco projetos que preservam os dois."
+     data-en="The sovereignty of indigenous peoples and the integrity of forests are <em>the same struggle</em>. I seek projects that preserve both.">
+    A soberania dos povos originários
+    e a integridade das florestas
+    são <em>a mesma luta</em>.
+    Busco projetos que preservam os dois.
+  </p>
+</section>
+
+<!-- ── FULL BLEED 1 ── -->
+<div class="full-bleed" id="fullbleed-1">
+  <div class="ph" style="background:linear-gradient(160deg,#1a2e1c,#0a1510);"></div>
+  <span class="full-bleed-cap">Taquaral · Goiás · Garapa (Apuleia leiocarpa) · Brasil</span>
+</div>
+
+<!-- ── WORK ── -->
+<section id="work">
+  <div class="work-header fade">
+    <span class="section-num">01</span>
+    <h2 class="section-heading" data-pt="Onde atuo" data-en="What I do">Onde atuo</h2>
+  </div>
+  <div class="work-grid">
+    <div class="work-item fade" style="transition-delay:.05s">
+      <span class="work-num">01</span>
+      <h3 class="work-title" data-pt="Soberania<br>Ancestral" data-en="Ancestral<br>Sovereignty">Soberania<br>Ancestral</h3>
+      <p class="work-desc" data-pt="Projetos com povos originários — especialmente o povo Huni Kuin, no Acre. Valorização de saberes, territórios e culturas vivas." data-en="Projects with indigenous peoples — especially the Huni Kuin people, in Acre. Honoring knowledge, territories and living cultures.">Projetos com povos originários — especialmente o povo Huni Kuin, no Acre. Valorização de saberes, territórios e culturas vivas.</p>
+      <span class="work-tag" data-pt="Acre · Brasil · Global" data-en="Acre · Brazil · Global">Acre · Brasil · Global</span>
+    </div>
+    <div class="work-item fade" style="transition-delay:.12s">
+      <span class="work-num">02</span>
+      <h3 class="work-title" data-pt="Preservação<br>Ambiental" data-en="Environmental<br>Preservation">Preservação<br>Ambiental</h3>
+      <p class="work-desc" data-pt="Atuação na 4RMUNDO — proteção de áreas degradadas no Brasil via legislação europeia de compensação de carbono." data-en="Working at 4RMUNDO — protecting degraded areas in Brazil through European carbon offset legislation.">Atuação na 4RMUNDO — proteção de áreas degradadas no Brasil via legislação europeia de compensação de carbono.</p>
+      <span class="work-tag" data-pt="Brasil · Europa" data-en="Brazil · Europe">Brasil · Europa</span>
+    </div>
+    <div class="work-item fade" style="transition-delay:.22s">
+      <span class="work-num">03</span>
+      <h3 class="work-title" data-pt="Autonomia<br>Indígena" data-en="Indigenous<br>Autonomy">Autonomia<br>Indígena</h3>
+      <p class="work-desc" data-pt="Captação de apoios para projetos na Reserva do Xingu — empoderamento indígena e conexão com parceiros globais." data-en="Raising support for projects in the Xingu Reserve — indigenous empowerment and connection with global partners.">Captação de apoios para projetos na Reserva do Xingu — empoderamento indígena e conexão com parceiros globais.</p>
+      <span class="work-tag" data-pt="Xingu · Reservas · Aberta a parcerias" data-en="Xingu · Reserves · Open to partnerships">Xingu · Reservas · Aberta a parcerias</span>
+    </div>
+    <div class="work-item fade" style="transition-delay:.32s">
+      <span class="work-num">04</span>
+      <h3 class="work-title" data-pt="Educação<br>& Cultura" data-en="Education<br>& Culture">Educação<br>& Cultura</h3>
+      <p class="work-desc" data-pt="Educadora infantil formada na Alemanha. Gastronomia e saberes alimentares tradicionais como linguagem intercultural." data-en="Early childhood educator trained in Germany. Gastronomy and traditional food knowledge as intercultural language.">Educadora infantil formada na Alemanha. Gastronomia e saberes alimentares tradicionais como linguagem intercultural.</p>
+      <span class="work-tag">Mannheim · Curitiba</span>
+    </div>
+  </div>
+</section>
+
+<!-- ── FULL BLEED 2 ── -->
+<div class="full-bleed" style="height:55vh" id="fullbleed-2">
+  <div class="ph" style="background:linear-gradient(120deg,#1a1208,#2a1a08,#0f1a10);"></div>
+  <span class="full-bleed-cap">Território Huni Kuin · Rio Jordão, Acre, Brasil</span>
+</div>
+
+<!-- ── GALLERY ── -->
+<section id="gallery">
+  <div class="gallery-header fade">
+    <span class="section-num">02</span>
+    <h2 class="section-heading" data-pt="Imagens" data-en="Images">Imagens</h2>
+  </div>
+  <div class="photo-strip" id="strip-1">
+    <div class="photo-cell"><div class="ph" style="background:#1a2a12;"></div></div>
+    <div class="photo-cell sq"><div class="ph" style="background:#2a1a0a;"></div></div>
+    <div class="photo-cell sq"><div class="ph" style="background:#1a1212;"></div></div>
+  </div>
+  <div class="photo-strip-2" id="strip-2">
+    <div class="photo-cell wide"><div class="ph" style="background:#0f1a10;"></div></div>
+    <div class="photo-cell wide"><div class="ph" style="background:#1a0f08;"></div></div>
+    <div class="photo-cell"><div class="ph" style="background:#1a1a0a;"></div></div>
+  </div>
+</section>
+
+<!-- ── LANGUAGES ── -->
+<section id="languages" class="fade">
+  <span class="lang-pill">🇧🇷 Português<span class="lang-level">fluente</span></span>
+  <span class="lang-sep">—</span>
+  <span class="lang-pill">🇩🇪 Deutsch<span class="lang-level">fluente</span></span>
+  <span class="lang-sep">—</span>
+  <span class="lang-pill">🇬🇧 English<span class="lang-level">fluente</span></span>
+  <span class="lang-sep">—</span>
+  <span class="lang-pill">🪶 Hãntxa Kuin<span class="lang-level">em aprendizado</span></span>
+</section>
+
+<!-- ── CONTACT ── -->
+<section id="contact">
+  <div class="contact-left fade">
+    <h2 class="contact-heading" data-pt="Vamos<br><em>conversar</em>" data-en="Let's<br><em>talk</em>">Vamos<br><em>conversar</em></h2>
+    <p class="availability" data-pt="<span class='dot'></span> Disponível para projetos" data-en="<span class='dot'></span> Available for projects"><span class="dot"></span> Disponível para projetos</p>
+  </div>
+  <div class="contact-right fade" style="transition-delay:.1s">
+    <a href="mailto:jahiany.silva@4rmundo.com" class="contact-link">
+      <span class="cl-label">E-mail</span>
+      <span class="cl-value">jahiany.silva@4rmundo.com</span>
+    </a>
+    <a href="https://wa.me/491789820642" class="contact-link" target="_blank">
+      <span class="cl-label">WhatsApp</span>
+      <span class="cl-value">+49 178 982 0642</span>
+    </a>
+    <a href="https://4rmundo.com" class="contact-link" target="_blank">
+      <span class="cl-label" data-pt="Empresa" data-en="Company">Empresa</span>
+      <span class="cl-value">4RMUNDO</span>
+    </a>
+  </div>
+</section>
+
+<footer>
+  <p>Jah Selva · Brasília, DF · Karlsruhe, DE · © 2026</p>
+  <p>Brasil · Alemanha · Mundo</p>
+</footer>
+
+<script>
+// ── Modo edição: só ativo em jahselva.github.io?editar ────────────
+const EDIT_MODE = new URLSearchParams(window.location.search).has('editar');
+if (EDIT_MODE) document.body.classList.add('edit-mode');
+
+const SLOTS = [
+  { sel: '#hero-bg',     pos: 'center 25%' },
+  { sel: '#fullbleed-1', pos: 'center 40%', cap: 'Taquaral · Goiás · Garapa (Apuleia leiocarpa) · Brasil' },
+  { sel: '#fullbleed-2', pos: 'center 50%', cap: 'Território Huni Kuin · Rio Jordão, Acre, Brasil' },
+  { sel: '#strip-1 .photo-cell:nth-child(1)', pos: 'center top',  cap: 'Serra da Petrovina · Mato Grosso, Brasil' },
+  { sel: '#strip-1 .photo-cell:nth-child(2)', pos: 'center',      cap: 'Taquaral · Goiás · Jatobá (Hymenaea courbaril) · Brasil' },
+  { sel: '#strip-1 .photo-cell:nth-child(3)', pos: 'center',      cap: 'Mato Grosso, Brasil' },
+  { sel: '#strip-2 .photo-cell:nth-child(1)', pos: 'center',      cap: 'Território Huni Kuin · Rio Jordão, Acre, Brasil' },
+  { sel: '#strip-2 .photo-cell:nth-child(2)', pos: 'center',      cap: 'Território Huni Kuin · Rio Jordão, Acre, Brasil' },
+  { sel: '#strip-2 .photo-cell:nth-child(3)', pos: 'center',      cap: 'Território Huni Kuin · Rio Jordão, Acre, Brasil' },
+];
+
+const DB_NAME = 'jah-portfolio';
+const DB_STORE = 'photos';
+const DB_KEY = 'slots';
+const DB_POS_KEY = 'positions';
+const DB_CAP_KEY = 'captions';
+
+// ── IndexedDB helpers ──────────────────────────────────────────────
+function openDB() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore(DB_STORE);
+    req.onsuccess = e => res(e.target.result);
+    req.onerror   = e => rej(e.target.error);
+  });
+}
+async function savePhotos(urls) {
+  const db = await openDB();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(DB_STORE, 'readwrite');
+    tx.objectStore(DB_STORE).put(urls, DB_KEY);
+    tx.oncomplete = res; tx.onerror = e => rej(e.target.error);
+  });
+}
+async function loadPhotos() {
+  const db = await openDB();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(DB_STORE, 'readonly');
+    const req = tx.objectStore(DB_STORE).get(DB_KEY);
+    req.onsuccess = e => res(e.target.result || []);
+    req.onerror   = e => rej(e.target.error);
+  });
+}
+async function savePositions(pos) {
+  const db = await openDB();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(DB_STORE, 'readwrite');
+    tx.objectStore(DB_STORE).put(pos, DB_POS_KEY);
+    tx.oncomplete = res; tx.onerror = e => rej(e.target.error);
+  });
+}
+async function saveCaptions(caps) {
+  const db = await openDB();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(DB_STORE, 'readwrite');
+    tx.objectStore(DB_STORE).put(caps, DB_CAP_KEY);
+    tx.oncomplete = res; tx.onerror = e => rej(e.target.error);
+  });
+}
+async function loadCaptions() {
+  const db = await openDB();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(DB_STORE, 'readonly');
+    const req = tx.objectStore(DB_STORE).get(DB_CAP_KEY);
+    req.onsuccess = e => res(e.target.result || {});
+    req.onerror   = e => rej(e.target.error);
+  });
+}
+async function loadPositions() {
+  const db = await openDB();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(DB_STORE, 'readonly');
+    const req = tx.objectStore(DB_STORE).get(DB_POS_KEY);
+    req.onsuccess = e => res(e.target.result || {});
+    req.onerror   = e => rej(e.target.error);
+  });
+}
+
+// ── Render ────────────────────────────────────────────────────────
+function loadImg(url, slot) {
+  const el = document.querySelector(slot.sel);
+  if (!el) return;
+  const isFullBleed = slot.sel.startsWith('#fullbleed') || slot.sel === '#hero-bg';
+  const nd = 'draggable="false"';
+  if (slot.sel === '#hero-bg') {
+    el.innerHTML = `<img ${nd} src="${url}" style="pointer-events:none;width:100%;height:100%;object-fit:cover;object-position:${slot.pos}">`;
+  } else if (isFullBleed && slot.cap) {
+    el.innerHTML = `<img ${nd} src="${url}" style="pointer-events:none;width:100%;height:100%;object-fit:cover;object-position:${slot.pos}"><span class="full-bleed-cap">${slot.cap}</span>`;
+  } else if (!isFullBleed && slot.cap) {
+    el.classList.add('has-cap');
+    el.innerHTML = `<img ${nd} src="${url}" style="pointer-events:none;width:100%;height:100%;object-fit:cover;object-position:${slot.pos};transition:transform .6s ease,filter .4s ease;filter:grayscale(10%)"><span class="photo-cap">${slot.cap}</span>`;
+    el.addEventListener('mouseenter', () => { const img = el.querySelector('img'); if(img){img.style.transform='scale(1.04)';img.style.filter='grayscale(0%)';} });
+    el.addEventListener('mouseleave', () => { const img = el.querySelector('img'); if(img){img.style.transform='';img.style.filter='grayscale(10%)';} });
+  } else {
+    el.innerHTML = `<img ${nd} src="${url}" style="pointer-events:none;width:100%;height:100%;object-fit:cover;object-position:${slot.pos};transition:transform .6s ease,filter .4s ease;filter:grayscale(10%)">`;
+    el.addEventListener('mouseenter', () => { const img = el.querySelector('img'); if(img){img.style.transform='scale(1.04)';img.style.filter='grayscale(0%)';} });
+    el.addEventListener('mouseleave', () => { const img = el.querySelector('img'); if(img){img.style.transform='';img.style.filter='grayscale(10%)';} });
+  }
+}
+
+function showSite() {
+  const overlay = document.getElementById('upload-overlay');
+  overlay.style.transition = 'opacity 0.5s ease';
+  overlay.style.opacity = '0';
+  setTimeout(() => overlay.style.display = 'none', 500);
+}
+
+// ── Read files → save → show ──────────────────────────────────────
+function readAndSave(files) {
+  const urls = new Array(Math.min(files.length, SLOTS.length));
+  let done = 0;
+  files.forEach((file, i) => {
+    if (i >= SLOTS.length) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      urls[i] = ev.target.result;
+      loadImg(ev.target.result, SLOTS[i]);
+      done++;
+      if (done === Math.min(files.length, SLOTS.length)) {
+        savedUrls = urls.slice();
+        savePhotos(urls).catch(() => {});
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+  showSite();
+}
+
+document.getElementById('photo-input').addEventListener('change', function(e) {
+  readAndSave(Array.from(e.target.files));
+});
+
+document.getElementById('skip-btn').addEventListener('click', showSite);
+
+// ── Restore on load ───────────────────────────────────────────────
+function attachAllControls() {
+  SLOTS.forEach((slot, i) => {
+    const el = document.querySelector(slot.sel === '#hero-bg' ? '#hero' : slot.sel);
+    if (!el) return;
+    if (!el.querySelector('.swap-btn'))    addSwapBtn(el, i);
+    if (!el.querySelector('.pos-arrows'))  addPosArrows(el, i);
+    if (!el.querySelector('.drag-handle')) makeDraggable(el, i);
+    // Apply saved caption if any
+    if (savedCaps[i]) {
+      const capEl = el.querySelector('.full-bleed-cap, .photo-cap');
+      if (capEl) capEl.textContent = savedCaps[i];
+    }
+    // Make caption editable (só no modo edição)
+    if (EDIT_MODE) {
+      const capEl = el.querySelector('.full-bleed-cap, .photo-cap');
+      if (capEl && !capEl.dataset.editable) {
+        capEl.dataset.editable = '1';
+        makeCapEditable(capEl, i);
+      }
+    }
+  });
+}
+
+Promise.all([loadPhotos(), loadPositions(), loadCaptions()]).then(([saved, pos, caps]) => {
+  savedPos  = pos  || {};
+  savedCaps = caps || {};
+  if (saved && saved.length > 0) {
+    savedUrls = saved;
+    saved.forEach((url, i) => {
+      if (url && SLOTS[i]) {
+        loadImg(url, SLOTS[i]);
+        if (savedPos[i]) {
+          const selStr = SLOTS[i].sel === '#hero-bg' ? '#hero' : SLOTS[i].sel;
+          const img = document.querySelector(selStr + ' img');
+          if (img) img.style.objectPosition = savedPos[i];
+        }
+      }
+    });
+    showSite();
+    setTimeout(attachAllControls, 100);
+  } else if (typeof BAKED_PHOTOS === 'undefined') {
+    if (EDIT_MODE) document.getElementById('upload-overlay').style.display = 'flex';
+  }
+}).catch(() => {
+  if (typeof BAKED_PHOTOS === 'undefined') {
+    if (EDIT_MODE) document.getElementById('upload-overlay').style.display = 'flex';
+  }
+});
+
+// ── Per-slot swap buttons ─────────────────────────────────────────
+let savedUrls = [];
+let savedPos  = {};
+let savedCaps = {};
+
+function makeCapEditable(capEl, slotIndex) {
+  if (!capEl) return;
+  capEl.addEventListener('click', e => {
+    e.stopPropagation();
+    const current = capEl.textContent.trim();
+    const isFullBleed = capEl.classList.contains('full-bleed-cap');
+    const parent = capEl.parentElement;
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = current;
+    input.className = 'cap-input';
+    if (!isFullBleed) {
+      input.style.cssText = 'position:absolute;bottom:0.85rem;left:1rem;z-index:20;font-size:0.58rem;letter-spacing:0.14em;text-transform:uppercase;font-family:"DM Sans",sans-serif;background:rgba(15,13,9,0.8);border:1px solid rgba(245,239,227,0.3);border-radius:4px;color:rgba(245,239,227,0.92);padding:0.25rem 0.5rem;outline:none;min-width:220px;backdrop-filter:blur(8px)';
+    }
+    capEl.style.display = 'none';
+    parent.appendChild(input);
+    input.focus(); input.select();
+
+    function commit() {
+      const val = input.value.trim() || current;
+      capEl.textContent = val;
+      capEl.style.display = '';
+      input.remove();
+      savedCaps[slotIndex] = val;
+      SLOTS[slotIndex] = Object.assign({}, SLOTS[slotIndex], { cap: val });
+      saveCaptions(Object.assign({}, savedCaps)).catch(() => {});
+    }
+
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); commit(); } if (e.key === 'Escape') { input.remove(); capEl.style.display = ''; } });
+    input.addEventListener('blur', commit);
+  });
+}
+loadPhotos().then(u => { savedUrls = u || []; });
+loadPositions().then(p => {
+  savedPos = p || {};
+  // Apply saved positions to any already-rendered images
+  Object.entries(savedPos).forEach(([i, pos]) => {
+    const slot = SLOTS[i];
+    if (!slot) return;
+    const el = document.querySelector(slot.sel === '#hero-bg' ? '#hero' : slot.sel);
+    const img = el && el.querySelector('img');
+    if (img) img.style.objectPosition = pos;
+  });
+});
+
+function addSwapBtn(el, slotIndex) {
+  const btn = document.createElement('button');
+  btn.className = 'swap-btn';
+  btn.textContent = '↺ trocar foto';
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const input = document.createElement('input');
+    input.type = 'file'; input.accept = 'image/*';
+    input.addEventListener('change', function() {
+      const file = this.files[0]; if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const url = ev.target.result;
+        savedUrls[slotIndex] = url;
+        loadImg(url, SLOTS[slotIndex]);
+        savePhotos(savedUrls.slice()).catch(() => {});
+        setTimeout(() => reattach(slotIndex), 50);
+      };
+      reader.readAsDataURL(file);
+    });
+    input.click();
+  });
+  el.appendChild(btn);
+}
+
+// ── Position arrows ───────────────────────────────────────────────
+function addPosArrows(el, slotIndex) {
+  const wrap = document.createElement('div');
+  wrap.className = 'pos-arrows';
+
+  function nudge(axis, delta) {
+    const img = el.querySelector('img');
+    if (!img) return;
+    const cur = (savedPos[slotIndex] || img.style.objectPosition || '50% 50%').trim();
+    const parts = cur.split(/\s+/);
+    let x = parseFloat(parts[0]) || 50;
+    let y = parseFloat(parts[1]) || 50;
+    if (axis === 'y') y = Math.min(100, Math.max(0, y + delta));
+    if (axis === 'x') x = Math.min(100, Math.max(0, x + delta));
+    const pos = `${x}% ${y}%`;
+    img.style.objectPosition = pos;
+    savedPos[slotIndex] = pos;
+    savePositions(Object.assign({}, savedPos)).catch(() => {});
+  }
+
+  [['↑','y',-8],['↓','y',8],['←','x',-8],['→','x',8]].forEach(([label, axis, delta]) => {
+    const btn = document.createElement('button');
+    btn.className = 'pos-arrow';
+    btn.textContent = label;
+    btn.title = label === '↑' ? 'mover para cima' : label === '↓' ? 'mover para baixo' : label === '←' ? 'mover para esquerda' : 'mover para direita';
+    btn.addEventListener('click', e => { e.stopPropagation(); nudge(axis, delta); });
+    wrap.appendChild(btn);
+  });
+
+  el.appendChild(wrap);
+}
+
+// ── Drag-to-swap ──────────────────────────────────────────────────
+let dragFrom = null;
+
+function reattach(idx) {
+  const target = document.querySelector(SLOTS[idx].sel === '#hero-bg' ? '#hero' : SLOTS[idx].sel);
+  if (!target) return;
+  if (!target.querySelector('.swap-btn'))   addSwapBtn(target, idx);
+  if (!target.querySelector('.pos-arrows')) addPosArrows(target, idx);
+  if (!target.querySelector('.drag-handle')) makeDraggable(target, idx);
+}
+
+function makeDraggable(el, slotIndex) {
+  // Drag handle element
+  const handle = document.createElement('div');
+  handle.className = 'drag-handle';
+  handle.textContent = '⠿';
+  handle.setAttribute('draggable', true);
+  el.appendChild(handle);
+
+  // The handle initiates drag; the container receives drops
+  handle.addEventListener('dragstart', e => {
+    dragFrom = slotIndex;
+    el.style.opacity = '0.5';
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(slotIndex));
+  });
+  handle.addEventListener('dragend', () => {
+    el.style.opacity = '';
+    document.querySelectorAll('.drag-over').forEach(d => d.classList.remove('drag-over'));
+  });
+
+  el.addEventListener('dragover', e => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    el.classList.add('drag-over');
+  });
+  el.addEventListener('dragleave', e => {
+    if (!el.contains(e.relatedTarget)) el.classList.remove('drag-over');
+  });
+  el.addEventListener('drop', e => {
+    e.preventDefault();
+    el.classList.remove('drag-over');
+    if (dragFrom === null || dragFrom === slotIndex) return;
+
+    const fromIdx = dragFrom;
+    dragFrom = null;
+
+    // Swap urls and positions
+    const tmpUrl = savedUrls[fromIdx];
+    savedUrls[fromIdx] = savedUrls[slotIndex];
+    savedUrls[slotIndex] = tmpUrl;
+
+    const tmpPos = savedPos[fromIdx];
+    savedPos[fromIdx] = savedPos[slotIndex];
+    savedPos[slotIndex] = tmpPos;
+
+    // Re-render both slots
+    if (savedUrls[fromIdx])   loadImg(savedUrls[fromIdx],   SLOTS[fromIdx]);
+    if (savedUrls[slotIndex]) loadImg(savedUrls[slotIndex], SLOTS[slotIndex]);
+
+    // Restore positions
+    [fromIdx, slotIndex].forEach(idx => {
+      if (savedPos[idx]) {
+        const t = document.querySelector(SLOTS[idx].sel === '#hero-bg' ? '#hero' : SLOTS[idx].sel);
+        const img = t && t.querySelector('img');
+        if (img) img.style.objectPosition = savedPos[idx];
+      }
+    });
+
+    // Re-attach controls
+    setTimeout(() => { reattach(fromIdx); reattach(slotIndex); }, 50);
+
+    savePhotos(savedUrls.slice()).catch(() => {});
+    savePositions(Object.assign({}, savedPos)).catch(() => {});
+  });
+}
+
+// Botões de edição só aparecem no modo edição (?editar)
+// ── "Trocar fotos" button ─────────────────────────────────────────
+if (EDIT_MODE) setTimeout(() => {
+  const btn = document.createElement('label');
+  btn.innerHTML = '⟳ trocar fotos<input type="file" accept="image/*" multiple style="display:none">';
+  btn.style.cssText = 'position:fixed;bottom:1.5rem;right:1.5rem;z-index:50;font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:rgba(245,239,227,0.3);cursor:pointer;transition:color .2s;padding:0.5rem 1rem;border:1px solid rgba(245,239,227,0.1);border-radius:999px;background:rgba(15,13,9,0.8);backdrop-filter:blur(8px)';
+  btn.addEventListener('mouseenter', () => btn.style.color = 'rgba(245,239,227,0.8)');
+  btn.addEventListener('mouseleave', () => btn.style.color = 'rgba(245,239,227,0.3)');
+  btn.querySelector('input').addEventListener('change', function(e) {
+    readAndSave(Array.from(e.target.files));
+  });
+  document.body.appendChild(btn);
+
+  // Salvar com fotos button
+  const saveBtn = document.createElement('button');
+  saveBtn.textContent = '↓ salvar com fotos';
+  saveBtn.style.cssText = 'position:fixed;bottom:1.5rem;left:1.5rem;z-index:50;font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:rgba(245,239,227,0.3);cursor:pointer;transition:color .2s, border-color .2s;padding:0.5rem 1rem;border:1px solid rgba(245,239,227,0.1);border-radius:999px;background:rgba(15,13,9,0.8);backdrop-filter:blur(8px)';
+  saveBtn.addEventListener('mouseenter', () => { saveBtn.style.color = 'rgba(200,146,42,0.9)'; saveBtn.style.borderColor = 'rgba(200,146,42,0.4)'; });
+  saveBtn.addEventListener('mouseleave', () => { saveBtn.style.color = 'rgba(245,239,227,0.3)'; saveBtn.style.borderColor = 'rgba(245,239,227,0.1)'; });
+  saveBtn.addEventListener('click', saveWithPhotos);
+  document.body.appendChild(saveBtn);
+}, 600); // fim if EDIT_MODE
+
+// ── Salvar com fotos embutidas ────────────────────────────────────
+function saveWithPhotos() {
+  if (!savedUrls || savedUrls.filter(Boolean).length === 0) {
+    alert('Selecione as fotos primeiro.');
+    return;
+  }
+  const html = document.documentElement.outerHTML;
+  // Inject a BAKED_PHOTOS variable before the SLOTS declaration
+  const marker = 'const SLOTS = [';
+  const injection = `const BAKED_PHOTOS = ${JSON.stringify(savedUrls)};\nconst BAKED_POS = ${JSON.stringify(savedPos)};\nconst BAKED_CAPS = ${JSON.stringify(savedCaps)};\n`;
+  const patched = html.replace(marker, injection + marker);
+  const blob = new Blob([patched], { type: 'text/html' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'jah-selva-portfolio.html';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// If baked photos exist, load them immediately (no overlay)
+if (typeof BAKED_PHOTOS !== 'undefined' && BAKED_PHOTOS.length > 0) {
+  savedUrls = BAKED_PHOTOS;
+  savedPos  = typeof BAKED_POS !== 'undefined' ? BAKED_POS : {};
+  savedCaps = typeof BAKED_CAPS !== 'undefined' ? BAKED_CAPS : {};
+  BAKED_PHOTOS.forEach((url, i) => {
+    if (url && SLOTS[i]) {
+      loadImg(url, SLOTS[i]);
+      if (savedPos[i]) {
+        const selStr = SLOTS[i].sel === '#hero-bg' ? '#hero' : SLOTS[i].sel;
+        const img = document.querySelector(selStr + ' img');
+        if (img) img.style.objectPosition = savedPos[i];
+      }
+    }
+  });
+  showSite();
+  setTimeout(attachAllControls, 100);
+}
+
+// ── Language toggle ───────────────────────────────────────────────
+let currentLang = localStorage.getItem('site-lang') || 'pt';
+
+function applyLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('site-lang', lang);
+  document.querySelectorAll('[data-pt]').forEach(el => {
+    el.innerHTML = el.getAttribute('data-' + lang);
+  });
+  const btn = document.querySelector('.lang-toggle');
+  if (btn) { btn.classList.toggle('is-pt', lang === 'pt'); btn.classList.toggle('is-en', lang === 'en'); }
+}
+
+function toggleLang() {
+  applyLang(currentLang === 'pt' ? 'en' : 'pt');
+}
+
+// Apply on load
+applyLang(currentLang);
+
+// ── Scroll fade
+const fades = document.querySelectorAll('.fade');
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); obs.unobserve(e.target); } });
+}, { threshold: 0.1 });
+fades.forEach(el => obs.observe(el));
+</script>
+</body>
+</html>
