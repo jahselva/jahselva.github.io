@@ -979,7 +979,16 @@ async function saveWithPhotos() {
     const totalBytes = compressed.reduce((acc, d) => acc + (d ? d.length * 0.75 : 0), 0);
     if (totalBytes < TARGET_BYTES) break;
   }
+  // Remove src das imagens antes do outerHTML (senão as fotos ficam duplicadas no arquivo)
+  const imgs = document.querySelectorAll('img[src^="data:"]');
+  const imgSrcs = Array.from(imgs).map(img => img.getAttribute('src'));
+  imgs.forEach(img => img.removeAttribute('src'));
+
   let html = document.documentElement.outerHTML;
+
+  // Restaura os src das imagens na tela
+  imgs.forEach((img, i) => img.setAttribute('src', imgSrcs[i]));
+
   // Remove baked data de versões anteriores para não duplicar
   html = html.replace(/const BAKED_PHOTOS[\s\S]*?(?=const SLOTS = \[)/, '');
   const marker = 'const SLOTS = [';
