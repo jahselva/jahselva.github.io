@@ -962,9 +962,9 @@ async function saveWithPhotos() {
     alert('Selecione as fotos primeiro.');
     return;
   }
-  // Comprime cada foto para máx 1600px e qualidade 0.78 (~2-4 MB total)
+  // Comprime cada foto para máx 900px e qualidade 0.65 (~3-5 MB total)
   const compressed = await Promise.all(
-    savedUrls.map(url => url ? compressDataUrl(url, 1600, 0.78) : Promise.resolve(null))
+    savedUrls.map(url => url ? compressDataUrl(url, 900, 0.65) : Promise.resolve(null))
   );
   const html = document.documentElement.outerHTML;
   const marker = 'const SLOTS = [';
